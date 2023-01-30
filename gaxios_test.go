@@ -1,7 +1,7 @@
 package gaxios_test
 
 import (
-	"mofiqul/gaxios"
+	"github.com/mofiqul/gaxios"
 	"testing"
 
 	"github.com/stretchr/testify/require"

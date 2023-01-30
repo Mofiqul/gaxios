@@ -1,4 +1,4 @@
-module mofiqul/gaxios
+module github.com/mofiqul/gaxios
 
 go 1.19
 
