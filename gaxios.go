@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type Header struct {
@@ -16,12 +17,15 @@ type Header struct {
 }
 
 type GAxiosConfig struct {
-	Header http.Header
+	Header  http.Header
+	BaseUrl string
+	Query   map[string]string
+	Timeout time.Duration
 }
 
 type GAxios struct {
-	baseUrl string
-	client  *http.Client
+	client *http.Client
+	config *GAxiosConfig
 }
 
 type GAxiosResponse struct {
@@ -32,10 +36,18 @@ type GAxiosResponse struct {
 	Request    *http.Request
 }
 
-func New() *GAxios {
-	return &GAxios{
+func New(config *GAxiosConfig) *GAxios {
+	gaxios := &GAxios{
 		client: &http.Client{},
 	}
+
+	if config != nil {
+		if config.Timeout != 0 {
+			gaxios.client.Timeout = config.Timeout
+		}
+	}
+
+	return gaxios
 }
 
 func processResponse(res *http.Response) (*GAxiosResponse, error) {
@@ -44,7 +56,10 @@ func processResponse(res *http.Response) (*GAxiosResponse, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Unable to read response body of bad response %w", err)
 		}
-		return nil, fmt.Errorf("Response returned status with code %d: %+v, path: %s", res.StatusCode, string(body), res.Request.URL)
+		return nil, fmt.Errorf(
+			"Response returned status with code %d: %+v, path: %s",
+			res.StatusCode, string(body), res.Request.URL,
+		)
 	}
 	resp := &GAxiosResponse{
 		Status:     res.StatusCode,
@@ -69,29 +84,47 @@ func marshalBody(body interface{}) (io.Reader, error) {
 	return payload, nil
 }
 
-func createRequest(method string, url string, payload interface{}) (*http.Request, error) {
+func createRequest(
+	method string, url string,
+	payload interface{},
+	cfg *GAxiosConfig,
+) (*http.Request, error) {
 	body, err := marshalBody(payload)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to marshal payload %w", err)
+	}
+
+	if cfg != nil {
+		if cfg.BaseUrl != "" {
+			url = fmt.Sprintf("%s/%s", cfg.BaseUrl, url)
+		}
 	}
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create request %w", err)
 	}
+
+	if cfg != nil {
+		if cfg.Header != nil {
+			for k, v := range cfg.Header {
+				req.Header.Set(http.CanonicalHeaderKey(k), strings.Join(v[:], ","))
+			}
+		}
+
+		if cfg.Query != nil {
+			for k, v := range cfg.Query {
+				req.URL.Query().Add(k, v)
+			}
+		}
+	}
+
 	return req, nil
 }
 
-func (h *GAxios) Get(url string, config *GAxiosConfig) (resp *GAxiosResponse, err error) {
-	req, err := createRequest("GET", url, nil)
+func (h *GAxios) Get(url string, cfg *GAxiosConfig) (resp *GAxiosResponse, err error) {
+	req, err := createRequest(http.MethodGet, url, nil, cfg)
 	if err != nil {
 		return nil, err
-	}
-	if config != nil {
-		if config.Header != nil {
-			for k, v := range config.Header {
-				req.Header.Set(http.CanonicalHeaderKey(k), strings.Join(v[:], ","))
-			}
-		}
 	}
 	res, err := h.client.Do(req)
 	if err != nil {
@@ -100,17 +133,14 @@ func (h *GAxios) Get(url string, config *GAxiosConfig) (resp *GAxiosResponse, er
 	return processResponse(res)
 }
 
-func (h *GAxios) Patch(url string, payload interface{}, config *GAxiosConfig) (*GAxiosResponse, error) {
-	req, err := createRequest("PATCH", url, payload)
+func (h *GAxios) Patch(
+	url string,
+	payload interface{},
+	cfg *GAxiosConfig,
+) (*GAxiosResponse, error) {
+	req, err := createRequest(http.MethodPatch, url, payload, cfg)
 	if err != nil {
 		return nil, err
-	}
-	if config != nil {
-		if config.Header != nil {
-			for k, v := range config.Header {
-				req.Header.Set(http.CanonicalHeaderKey(k), strings.Join(v[:], ","))
-			}
-		}
 	}
 	res, err := h.client.Do(req)
 	if err != nil {
@@ -119,17 +149,14 @@ func (h *GAxios) Patch(url string, payload interface{}, config *GAxiosConfig) (*
 	return processResponse(res)
 }
 
-func (h *GAxios) Post(url string, payload interface{}, config *GAxiosConfig) (*GAxiosResponse, error) {
-	req, err := createRequest("POST", url, payload)
+func (h *GAxios) Post(
+	url string,
+	payload interface{},
+	cfg *GAxiosConfig,
+) (*GAxiosResponse, error) {
+	req, err := createRequest(http.MethodPost, url, payload, cfg)
 	if err != nil {
 		return nil, err
-	}
-	if config != nil {
-		if config.Header != nil {
-			for k, v := range config.Header {
-				req.Header.Set(http.CanonicalHeaderKey(k), strings.Join(v[:], ","))
-			}
-		}
 	}
 	res, err := h.client.Do(req)
 	if err != nil {
@@ -138,17 +165,10 @@ func (h *GAxios) Post(url string, payload interface{}, config *GAxiosConfig) (*G
 	return processResponse(res)
 }
 
-func (h *GAxios) Delete(url string, config *GAxiosConfig) (*GAxiosResponse, error) {
-	req, err := createRequest("DELETE", url, nil)
+func (h *GAxios) Delete(url string, cfg *GAxiosConfig) (*GAxiosResponse, error) {
+	req, err := createRequest(http.MethodDelete, url, nil, cfg)
 	if err != nil {
 		return nil, err
-	}
-	if config != nil {
-		if config.Header != nil {
-			for k, v := range config.Header {
-				req.Header.Set(http.CanonicalHeaderKey(k), strings.Join(v[:], ","))
-			}
-		}
 	}
 	res, err := h.client.Do(req)
 
