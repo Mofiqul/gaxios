@@ -14,7 +14,17 @@ type ResponseData struct {
 	Message string `json:"message"`
 }
 
-var axios = gaxios.New(nil)
+var axios *gaxios.GAxios
+
+func init() {
+	axios = gaxios.New(
+		&gaxios.GAxiosConfig{
+			Header: http.Header{
+				"Accept": []string{"application/json"},
+			},
+		},
+	)
+}
 
 func TestGetMethod(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -30,27 +40,51 @@ func TestGetMethod(t *testing.T) {
 	}))
 
 	defer server.Close()
-	res, err := axios.Get(fmt.Sprintf("%s/test", server.URL), &gaxios.GAxiosConfig{
-		Header: http.Header{
-			"Accept": []string{"application/json"},
-		},
+	t.Run("Test GET with instance", func(t *testing.T) {
+		res, err := axios.Get(fmt.Sprintf("%s/test", server.URL))
+
+		defer res.Data.Close()
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %s", err.Error())
+		}
+
+		resp := &ResponseData{}
+		_ = json.NewDecoder(res.Data).Decode(resp)
+
+		if res.Status != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.Status)
+		}
+
+		if resp.Message != "request success" {
+			t.Errorf("Expected message to be request success, got: %v", resp.Message)
+		}
 	})
 
-	if err != nil {
-		t.Errorf("Expected err to be nil, got %s", err.Error())
-	}
+	t.Run("Test GET without instance", func(t *testing.T) {
+		res, err := gaxios.Get(fmt.Sprintf("%s/test", server.URL),
+			&gaxios.GAxiosConfig{
+				Header: http.Header{
+					"Accept": []string{"application/json"},
+				},
+			},
+		)
 
-	resp := &ResponseData{}
-	_ = json.NewDecoder(res.Data).Decode(resp)
+		defer res.Data.Close()
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %s", err.Error())
+		}
 
-	if res.Status != 200 {
-		t.Errorf("Expected status code 200, got: %d", res.Status)
-	}
+		resp := &ResponseData{}
+		_ = json.NewDecoder(res.Data).Decode(resp)
 
-	if resp.Message != "request success" {
-		t.Errorf("Expected message to be request success, got: %v", resp.Message)
-	}
+		if res.Status != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.Status)
+		}
 
+		if resp.Message != "request success" {
+			t.Errorf("Expected message to be request success, got: %v", resp.Message)
+		}
+	})
 }
 
 func TestPostMethod(t *testing.T) {
@@ -82,31 +116,57 @@ func TestPostMethod(t *testing.T) {
 	}))
 
 	defer server.Close()
-	res, err := axios.Post(
-		fmt.Sprintf("%s/test", server.URL),
-		RequestBody{Name: "John Doe"},
-		&gaxios.GAxiosConfig{
-			Header: http.Header{
-				"Accept": []string{"application/json"},
+
+	t.Run("Test POST with instance", func(t *testing.T) {
+		res, err := axios.Post(
+			fmt.Sprintf("%s/test", server.URL),
+			RequestBody{Name: "John Doe"},
+		)
+
+		defer res.Data.Close()
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %s", err.Error())
+		}
+
+		resp := &ResponseData{}
+		_ = json.NewDecoder(res.Data).Decode(resp)
+
+		if res.Status != 201 {
+			t.Errorf("Expected status code 200, got: %d", res.Status)
+		}
+
+		if resp.Message != "request success" {
+			t.Errorf("Expected message to be request success, got: %v", resp.Message)
+		}
+	})
+
+	t.Run("Test POST without instance", func(t *testing.T) {
+		res, err := gaxios.Post(
+			fmt.Sprintf("%s/test", server.URL),
+			RequestBody{Name: "John Doe"},
+			&gaxios.GAxiosConfig{
+				Header: http.Header{
+					"Accept": []string{"application/json"},
+				},
 			},
-		},
-	)
+		)
 
-	if err != nil {
-		t.Errorf("Expected err to be nil, got %s", err.Error())
-	}
+		defer res.Data.Close()
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %s", err.Error())
+		}
 
-	resp := &ResponseData{}
-	_ = json.NewDecoder(res.Data).Decode(resp)
+		resp := &ResponseData{}
+		_ = json.NewDecoder(res.Data).Decode(resp)
 
-	if res.Status != 201 {
-		t.Errorf("Expected status code 200, got: %d", res.Status)
-	}
+		if res.Status != 201 {
+			t.Errorf("Expected status code 200, got: %d", res.Status)
+		}
 
-	if resp.Message != "request success" {
-		t.Errorf("Expected message to be request success, got: %v", resp.Message)
-	}
-
+		if resp.Message != "request success" {
+			t.Errorf("Expected message to be request success, got: %v", resp.Message)
+		}
+	})
 }
 
 func TestPatchMethod(t *testing.T) {
@@ -138,31 +198,57 @@ func TestPatchMethod(t *testing.T) {
 	}))
 
 	defer server.Close()
-	res, err := axios.Patch(
-		fmt.Sprintf("%s/test/2", server.URL),
-		RequestBody{Name: "John Doe"},
-		&gaxios.GAxiosConfig{
-			Header: http.Header{
-				"Accept": []string{"application/json"},
+
+	t.Run("Test PATCH with instance", func(t *testing.T) {
+		res, err := axios.Patch(
+			fmt.Sprintf("%s/test/2", server.URL),
+			RequestBody{Name: "John Doe"},
+		)
+
+		defer res.Data.Close()
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %s", err.Error())
+		}
+
+		resp := &ResponseData{}
+		_ = json.NewDecoder(res.Data).Decode(resp)
+
+		if res.Status != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.Status)
+		}
+
+		if resp.Message != "request success" {
+			t.Errorf("Expected message to be request success, got: %v", resp.Message)
+		}
+	})
+
+	t.Run("Test PATCH without instance", func(t *testing.T) {
+		res, err := gaxios.Patch(
+			fmt.Sprintf("%s/test/2", server.URL),
+			RequestBody{Name: "John Doe"},
+			&gaxios.GAxiosConfig{
+				Header: http.Header{
+					"Accept": []string{"application/json"},
+				},
 			},
-		},
-	)
+		)
 
-	if err != nil {
-		t.Errorf("Expected err to be nil, got %s", err.Error())
-	}
+		defer res.Data.Close()
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %s", err.Error())
+		}
 
-	resp := &ResponseData{}
-	_ = json.NewDecoder(res.Data).Decode(resp)
+		resp := &ResponseData{}
+		_ = json.NewDecoder(res.Data).Decode(resp)
 
-	if res.Status != 200 {
-		t.Errorf("Expected status code 200, got: %d", res.Status)
-	}
+		if res.Status != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.Status)
+		}
 
-	if resp.Message != "request success" {
-		t.Errorf("Expected message to be request success, got: %v", resp.Message)
-	}
-
+		if resp.Message != "request success" {
+			t.Errorf("Expected message to be request success, got: %v", resp.Message)
+		}
+	})
 }
 
 func TestDeleteMethod(t *testing.T) {
@@ -182,25 +268,50 @@ func TestDeleteMethod(t *testing.T) {
 	}))
 
 	defer server.Close()
-	res, err := axios.Delete(fmt.Sprintf("%s/test/2", server.URL), &gaxios.GAxiosConfig{
-		Header: http.Header{
-			"Accept": []string{"application/json"},
-		},
+
+	t.Run("Testing DELETE with instance", func(t *testing.T) {
+		res, err := axios.Delete(fmt.Sprintf("%s/test/2", server.URL))
+
+		defer res.Data.Close()
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %s", err.Error())
+		}
+
+		resp := &ResponseData{}
+		_ = json.NewDecoder(res.Data).Decode(resp)
+
+		if res.Status != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.Status)
+		}
+
+		if resp.Message != "request success" {
+			t.Errorf("Expected message to be request success, got: %v", resp.Message)
+		}
 	})
 
-	if err != nil {
-		t.Errorf("Expected err to be nil, got %s", err.Error())
-	}
+	t.Run("Testing DELETE without instance", func(t *testing.T) {
+		res, err := gaxios.Delete(fmt.Sprintf("%s/test/2", server.URL),
+			&gaxios.GAxiosConfig{
+				Header: http.Header{
+					"Accept": []string{"application/json"},
+				},
+			},
+		)
 
-	resp := &ResponseData{}
-	_ = json.NewDecoder(res.Data).Decode(resp)
+		defer res.Data.Close()
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %s", err.Error())
+		}
 
-	if res.Status != 200 {
-		t.Errorf("Expected status code 200, got: %d", res.Status)
-	}
+		resp := &ResponseData{}
+		_ = json.NewDecoder(res.Data).Decode(resp)
 
-	if resp.Message != "request success" {
-		t.Errorf("Expected message to be request success, got: %v", resp.Message)
-	}
+		if res.Status != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.Status)
+		}
 
+		if resp.Message != "request success" {
+			t.Errorf("Expected message to be request success, got: %v", resp.Message)
+		}
+	})
 }
