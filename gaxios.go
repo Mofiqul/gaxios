@@ -11,11 +11,6 @@ import (
 	"time"
 )
 
-type Header struct {
-	Name  string
-	Value string
-}
-
 type GAxiosConfig struct {
 	Header  http.Header
 	BaseUrl string
@@ -30,24 +25,17 @@ type GAxios struct {
 
 type GAxiosResponse struct {
 	Status     int
-	Data       io.Reader
+	Data       io.ReadCloser
 	Header     http.Header
 	StatusText string
 	Request    *http.Request
 }
 
 func New(config *GAxiosConfig) *GAxios {
-	gaxios := &GAxios{
+	return &GAxios{
 		client: &http.Client{},
+		config: config,
 	}
-
-	if config != nil {
-		if config.Timeout != 0 {
-			gaxios.client.Timeout = config.Timeout
-		}
-	}
-
-	return gaxios
 }
 
 func processResponse(res *http.Response) (*GAxiosResponse, error) {
@@ -121,8 +109,10 @@ func createRequest(
 	return req, nil
 }
 
-func (h *GAxios) Get(url string, cfg *GAxiosConfig) (resp *GAxiosResponse, err error) {
-	req, err := createRequest(http.MethodGet, url, nil, cfg)
+// Get issues a GET to the specified URL.
+// Caller should close resp.Data when done reading from it.
+func (h *GAxios) Get(url string) (resp *GAxiosResponse, err error) {
+	req, err := createRequest(http.MethodGet, url, nil, h.config)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +123,38 @@ func (h *GAxios) Get(url string, cfg *GAxiosConfig) (resp *GAxiosResponse, err e
 	return processResponse(res)
 }
 
-func (h *GAxios) Patch(
+// Get issues a GET to the specified URL.
+// Caller should close resp.Data when done reading from it.
+func Get(url string, cfg *GAxiosConfig) (resp *GAxiosResponse, err error) {
+	req, err := createRequest(http.MethodGet, url, nil, cfg)
+	if err != nil {
+		return nil, err
+	}
+	client := http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Unable perform request %w", err)
+	}
+	return processResponse(res)
+}
+
+// Patch issues a PATCH to the specified URL.
+// Caller should close resp.Data when done reading from it.
+func (h *GAxios) Patch(url string, payload interface{}) (*GAxiosResponse, error) {
+	req, err := createRequest(http.MethodPatch, url, payload, h.config)
+	if err != nil {
+		return nil, err
+	}
+	res, err := h.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Unable perform request %w", err)
+	}
+	return processResponse(res)
+}
+
+// Patch issues a PATCH to the specified URL.
+// Caller should close resp.Data when done reading from it.
+func Patch(
 	url string,
 	payload interface{},
 	cfg *GAxiosConfig,
@@ -142,6 +163,21 @@ func (h *GAxios) Patch(
 	if err != nil {
 		return nil, err
 	}
+	client := http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Unable perform request %w", err)
+	}
+	return processResponse(res)
+}
+
+// Post issues a POST to the specified URL.
+// Caller should close resp.Data when done reading from it.
+func (h *GAxios) Post(url string, payload interface{}) (*GAxiosResponse, error) {
+	req, err := createRequest(http.MethodPost, url, payload, h.config)
+	if err != nil {
+		return nil, err
+	}
 	res, err := h.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Unable perform request %w", err)
@@ -149,7 +185,9 @@ func (h *GAxios) Patch(
 	return processResponse(res)
 }
 
-func (h *GAxios) Post(
+// Post issues a POST to the specified URL.
+// Caller should close resp.Data when done reading from it.
+func Post(
 	url string,
 	payload interface{},
 	cfg *GAxiosConfig,
@@ -158,19 +196,38 @@ func (h *GAxios) Post(
 	if err != nil {
 		return nil, err
 	}
-	res, err := h.client.Do(req)
+	client := http.Client{}
+	res, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Unable perform request %w", err)
 	}
 	return processResponse(res)
 }
 
-func (h *GAxios) Delete(url string, cfg *GAxiosConfig) (*GAxiosResponse, error) {
-	req, err := createRequest(http.MethodDelete, url, nil, cfg)
+// Delete issues a DELETE to the specified URL.
+// Caller should close resp.Data when done reading from it.
+func (h *GAxios) Delete(url string) (*GAxiosResponse, error) {
+	req, err := createRequest(http.MethodDelete, url, nil, h.config)
 	if err != nil {
 		return nil, err
 	}
 	res, err := h.client.Do(req)
+
+	if err != nil {
+		return nil, fmt.Errorf("Unable perform request %w", err)
+	}
+	return processResponse(res)
+}
+
+// Delete issues a DELETE to the specified URL.
+// Caller should close resp.Data when done reading from it.
+func Delete(url string, cfg *GAxiosConfig) (*GAxiosResponse, error) {
+	req, err := createRequest(http.MethodDelete, url, nil, cfg)
+	if err != nil {
+		return nil, err
+	}
+	client := http.Client{}
+	res, err := client.Do(req)
 
 	if err != nil {
 		return nil, fmt.Errorf("Unable perform request %w", err)
