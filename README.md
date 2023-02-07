@@ -6,6 +6,7 @@
 go get github.com/mofiqul/gaxios
 ```
 
+## Read the [Documentation](https://pkg.go.dev/github.com/mofiqul/gaxios)
 
 ## Example 
 
@@ -32,11 +33,11 @@ Or create a instance with configuation
 
 ```go
 var axios = gaxios.New( 
-&gaxios.GAxiosConfig{
-	Header: http.Header{
-		"Accept": []string{"application/json"},
-	},
-})
+	&gaxios.GAxiosConfig{
+		Header: http.Header{
+			"Accept": []string{"application/json"},
+		},
+	})
 
 res, err := axios.Get(fmt.Sprintf("%s/test", server.URL))
 defer res.Data.Close()
@@ -47,3 +48,4 @@ if err != nil {
 resp := &ResponseData{}
 _ = json.NewDecoder(res.Data).Decode(resp)
 ```
+
