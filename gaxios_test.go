@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/mofiqul/gaxios"
+	"github.com/mofiqul/gaxios/utils"
 )
 
 type ResponseData struct {
@@ -314,4 +315,30 @@ func TestDeleteMethod(t *testing.T) {
 			t.Errorf("Expected message to be request success, got: %v", resp.Message)
 		}
 	})
+}
+
+func TestCustomRoundTripper(t *testing.T) {
+	mockRoundTripper := &utils.MockRoundTripper{
+		RtFunc: func(r *http.Request) (*http.Response, error) {
+			if r.URL.Path != "/roundtrip" {
+				t.Errorf("Expected path: roundtrip, got: %s", r.URL.Path)
+			}
+
+			return &http.Response{StatusCode: 200}, nil
+		},
+	}
+
+	axios := gaxios.New(&gaxios.GAxiosConfig{
+		Transport: mockRoundTripper,
+	})
+
+	res, err := axios.Get("http://example.com/roundtrip")
+
+	if err != nil {
+		t.Errorf("Expected err: nil, got: %s", err.Error())
+	}
+
+	if res.Status != 200 {
+		t.Errorf("Expected Status: 200, got %d", res.Status)
+	}
 }

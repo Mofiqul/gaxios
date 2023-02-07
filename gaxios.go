@@ -12,10 +12,11 @@ import (
 )
 
 type GAxiosConfig struct {
-	Header  http.Header
-	BaseUrl string
-	Query   map[string]string
-	Timeout time.Duration
+	Header    http.Header
+	BaseUrl   string
+	Query     map[string]string
+	Timeout   time.Duration
+	Transport http.RoundTripper
 }
 
 type GAxios struct {
@@ -31,10 +32,22 @@ type GAxiosResponse struct {
 	Request    *http.Request
 }
 
-func New(config *GAxiosConfig) *GAxios {
+func New(cfg *GAxiosConfig) *GAxios {
+	client := &http.Client{}
+
+	if cfg != nil {
+		if cfg.Transport != nil {
+			client.Transport = cfg.Transport
+		}
+
+		if cfg.Timeout != 0 {
+			client.Timeout = cfg.Timeout
+		}
+	}
+
 	return &GAxios{
-		client: &http.Client{},
-		config: config,
+		client: client,
+		config: cfg,
 	}
 }
 
