@@ -113,9 +113,11 @@ func createRequest(
 		}
 
 		if cfg.Query != nil {
+			query := req.URL.Query()
 			for k, v := range cfg.Query {
-				req.URL.Query().Add(k, v)
+				query.Add(k, v)
 			}
+			req.URL.RawQuery = query.Encode()
 		}
 	}
 
