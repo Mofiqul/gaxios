@@ -170,6 +170,80 @@ func TestPostMethod(t *testing.T) {
 	})
 }
 
+func TestPutMethod(t *testing.T) {
+	type RequestBody struct {
+		Name string `json:"name"`
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/test" {
+			t.Errorf("Expected request to: test, got: %s", r.URL.Path)
+		}
+
+		if r.Method != http.MethodPut {
+			t.Errorf("Expected request method: %s, got: %s", http.MethodPut, r.Method)
+		}
+
+		body := &RequestBody{}
+		_ = json.NewDecoder(r.Body).Decode(body)
+
+		if body.Name != "John Doe" {
+			t.Errorf("Expected name in body param to be: John Doe, got: %s", body.Name)
+		}
+
+		if r.Header.Get("Accept") != "application/json" {
+			t.Errorf("Expected Accept: application/json header, got: %s", r.Header.Get("Accept"))
+		}
+		w.WriteHeader(http.StatusNoContent)
+		w.Write([]byte(`{"message": "request success"}`))
+	}))
+
+	defer server.Close()
+
+	t.Run("Test PUT with instance", func(t *testing.T) {
+		res, err := axios.Put(
+			fmt.Sprintf("%s/test", server.URL),
+			RequestBody{Name: "John Doe"},
+		)
+
+		defer res.Data.Close()
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %s", err.Error())
+		}
+
+		resp := &ResponseData{}
+		_ = json.NewDecoder(res.Data).Decode(resp)
+
+		if res.Status != 204 {
+			t.Errorf("Expected status code 204, got: %d", res.Status)
+		}
+	})
+
+	t.Run("Test PUT without instance", func(t *testing.T) {
+		res, err := gaxios.Put(
+			fmt.Sprintf("%s/test", server.URL),
+			RequestBody{Name: "John Doe"},
+			&gaxios.GAxiosConfig{
+				Header: http.Header{
+					"Accept": []string{"application/json"},
+				},
+			},
+		)
+
+		defer res.Data.Close()
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %s", err.Error())
+		}
+
+		resp := &ResponseData{}
+		_ = json.NewDecoder(res.Data).Decode(resp)
+
+		if res.Status != 204 {
+			t.Errorf("Expected status code 204, got: %d", res.Status)
+		}
+	})
+}
+
 func TestPatchMethod(t *testing.T) {
 	type RequestBody struct {
 		Name string `json:"name"`

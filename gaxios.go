@@ -219,6 +219,39 @@ func Post(
 	return processResponse(res)
 }
 
+// Put issues a PUT to the specified URL.
+// Caller should close resp.Data when done reading from it.
+func (h *GAxios) Put(url string, payload interface{}) (*GAxiosResponse, error) {
+	req, err := createRequest(http.MethodPut, url, payload, h.config)
+	if err != nil {
+		return nil, err
+	}
+	res, err := h.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Unable perform request %w", err)
+	}
+	return processResponse(res)
+}
+
+// Put issues a PUT to the specified URL.
+// Caller should close resp.Data when done reading from it.
+func Put(
+	url string,
+	payload interface{},
+	cfg *GAxiosConfig,
+) (*GAxiosResponse, error) {
+	req, err := createRequest(http.MethodPut, url, payload, cfg)
+	if err != nil {
+		return nil, err
+	}
+	client := http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Unable perform request %w", err)
+	}
+	return processResponse(res)
+}
+
 // Delete issues a DELETE to the specified URL.
 // Caller should close resp.Data when done reading from it.
 func (h *GAxios) Delete(url string) (*GAxiosResponse, error) {
