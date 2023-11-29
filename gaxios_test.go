@@ -11,7 +11,7 @@ import (
 	"github.com/mofiqul/gaxios/utils"
 )
 
-type ResponseData struct {
+type ResponseBody struct {
 	Message string `json:"message"`
 }
 
@@ -43,17 +43,17 @@ func TestGetMethod(t *testing.T) {
 	defer server.Close()
 	t.Run("Test GET with instance", func(t *testing.T) {
 		res, err := axios.Get(fmt.Sprintf("%s/test", server.URL))
-
-		defer res.Data.Close()
 		if err != nil {
-			t.Errorf("Expected err to be nil, got %s", err.Error())
+			t.Errorf("Expected err to be nil, got %+v", err)
 		}
+		defer res.Body.Close()
 
-		resp := &ResponseData{}
-		_ = json.NewDecoder(res.Data).Decode(resp)
+		resp := &ResponseBody{}
 
-		if res.Status != 200 {
-			t.Errorf("Expected status code 200, got: %d", res.Status)
+		_ = json.NewDecoder(res.Body).Decode(resp)
+
+		if res.StatusCode != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.StatusCode)
 		}
 
 		if resp.Message != "request success" {
@@ -69,17 +69,17 @@ func TestGetMethod(t *testing.T) {
 				},
 			},
 		)
-
-		defer res.Data.Close()
 		if err != nil {
 			t.Errorf("Expected err to be nil, got %s", err.Error())
 		}
 
-		resp := &ResponseData{}
-		_ = json.NewDecoder(res.Data).Decode(resp)
+		defer res.Body.Close()
 
-		if res.Status != 200 {
-			t.Errorf("Expected status code 200, got: %d", res.Status)
+		resp := &ResponseBody{}
+		_ = json.NewDecoder(res.Body).Decode(resp)
+
+		if res.StatusCode != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.StatusCode)
 		}
 
 		if resp.Message != "request success" {
@@ -124,16 +124,16 @@ func TestPostMethod(t *testing.T) {
 			RequestBody{Name: "John Doe"},
 		)
 
-		defer res.Data.Close()
+		defer res.Body.Close()
 		if err != nil {
 			t.Errorf("Expected err to be nil, got %s", err.Error())
 		}
 
-		resp := &ResponseData{}
-		_ = json.NewDecoder(res.Data).Decode(resp)
+		resp := &ResponseBody{}
+		_ = json.NewDecoder(res.Body).Decode(resp)
 
-		if res.Status != 201 {
-			t.Errorf("Expected status code 200, got: %d", res.Status)
+		if res.StatusCode != 201 {
+			t.Errorf("Expected status code 200, got: %d", res.StatusCode)
 		}
 
 		if resp.Message != "request success" {
@@ -152,16 +152,16 @@ func TestPostMethod(t *testing.T) {
 			},
 		)
 
-		defer res.Data.Close()
+		defer res.Body.Close()
 		if err != nil {
 			t.Errorf("Expected err to be nil, got %s", err.Error())
 		}
 
-		resp := &ResponseData{}
-		_ = json.NewDecoder(res.Data).Decode(resp)
+		resp := &ResponseBody{}
+		_ = json.NewDecoder(res.Body).Decode(resp)
 
-		if res.Status != 201 {
-			t.Errorf("Expected status code 200, got: %d", res.Status)
+		if res.StatusCode != 201 {
+			t.Errorf("Expected status code 200, got: %d", res.StatusCode)
 		}
 
 		if resp.Message != "request success" {
@@ -206,16 +206,16 @@ func TestPatchMethod(t *testing.T) {
 			RequestBody{Name: "John Doe"},
 		)
 
-		defer res.Data.Close()
+		defer res.Body.Close()
 		if err != nil {
 			t.Errorf("Expected err to be nil, got %s", err.Error())
 		}
 
-		resp := &ResponseData{}
-		_ = json.NewDecoder(res.Data).Decode(resp)
+		resp := &ResponseBody{}
+		_ = json.NewDecoder(res.Body).Decode(resp)
 
-		if res.Status != 200 {
-			t.Errorf("Expected status code 200, got: %d", res.Status)
+		if res.StatusCode != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.StatusCode)
 		}
 
 		if resp.Message != "request success" {
@@ -234,16 +234,16 @@ func TestPatchMethod(t *testing.T) {
 			},
 		)
 
-		defer res.Data.Close()
+		defer res.Body.Close()
 		if err != nil {
 			t.Errorf("Expected err to be nil, got %s", err.Error())
 		}
 
-		resp := &ResponseData{}
-		_ = json.NewDecoder(res.Data).Decode(resp)
+		resp := &ResponseBody{}
+		_ = json.NewDecoder(res.Body).Decode(resp)
 
-		if res.Status != 200 {
-			t.Errorf("Expected status code 200, got: %d", res.Status)
+		if res.StatusCode != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.StatusCode)
 		}
 
 		if resp.Message != "request success" {
@@ -273,16 +273,16 @@ func TestDeleteMethod(t *testing.T) {
 	t.Run("Testing DELETE with instance", func(t *testing.T) {
 		res, err := axios.Delete(fmt.Sprintf("%s/test/2", server.URL))
 
-		defer res.Data.Close()
+		defer res.Body.Close()
 		if err != nil {
 			t.Errorf("Expected err to be nil, got %s", err.Error())
 		}
 
-		resp := &ResponseData{}
-		_ = json.NewDecoder(res.Data).Decode(resp)
+		resp := &ResponseBody{}
+		_ = json.NewDecoder(res.Body).Decode(resp)
 
-		if res.Status != 200 {
-			t.Errorf("Expected status code 200, got: %d", res.Status)
+		if res.StatusCode != 200 {
+			t.Errorf("Expected status code 200, got: %d", res.StatusCode)
 		}
 
 		if resp.Message != "request success" {
@@ -299,16 +299,16 @@ func TestDeleteMethod(t *testing.T) {
 			},
 		)
 
-		defer res.Data.Close()
+		defer res.Body.Close()
 		if err != nil {
 			t.Errorf("Expected err to be nil, got %s", err.Error())
 		}
 
-		resp := &ResponseData{}
-		_ = json.NewDecoder(res.Data).Decode(resp)
+		resp := &ResponseBody{}
+		_ = json.NewDecoder(res.Body).Decode(resp)
 
-		if res.Status != 200 {
-			t.Errorf("Expected status code 200, got: %d", res.Status)
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("Expected status code 200, got: %d", res.StatusCode)
 		}
 
 		if resp.Message != "request success" {
@@ -338,7 +338,7 @@ func TestCustomRoundTripper(t *testing.T) {
 		t.Errorf("Expected err: nil, got: %s", err.Error())
 	}
 
-	if res.Status != 200 {
-		t.Errorf("Expected Status: 200, got %d", res.Status)
+	if res.StatusCode != 200 {
+		t.Errorf("Expected StatusCode: 200, got %d", res.StatusCode)
 	}
 }

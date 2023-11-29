@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -24,12 +23,16 @@ type GAxios struct {
 	config *GAxiosConfig
 }
 
-type GAxiosResponse struct {
+type GAxiosError struct {
 	Status     int
-	Data       io.ReadCloser
 	Header     http.Header
 	StatusText string
 	Request    *http.Request
+	Mesaage    string
+}
+
+func (e *GAxiosError) Error() string {
+	return e.Mesaage
 }
 
 func New(cfg *GAxiosConfig) *GAxios {
@@ -51,25 +54,8 @@ func New(cfg *GAxiosConfig) *GAxios {
 	}
 }
 
-func processResponse(res *http.Response) (*GAxiosResponse, error) {
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to read response body of bad response %w", err)
-		}
-		return nil, fmt.Errorf(
-			"Response returned status with code %d: %+v, path: %s",
-			res.StatusCode, string(body), res.Request.URL,
-		)
-	}
-	resp := &GAxiosResponse{
-		Status:     res.StatusCode,
-		Header:     res.Header,
-		Request:    res.Request,
-		StatusText: res.Status,
-		Data:       res.Body,
-	}
-	return resp, nil
+func processResponse(res *http.Response) (*http.Response, error) {
+	return res, nil
 }
 
 func marshalBody(body interface{}) (io.Reader, error) {
@@ -124,7 +110,7 @@ func createRequest(
 
 // Get issues a GET to the specified URL.
 // Caller should close resp.Data when done reading from it.
-func (h *GAxios) Get(url string) (resp *GAxiosResponse, err error) {
+func (h *GAxios) Get(url string) (resp *http.Response, err error) {
 	req, err := createRequest(http.MethodGet, url, nil, h.config)
 	if err != nil {
 		return nil, err
@@ -138,7 +124,7 @@ func (h *GAxios) Get(url string) (resp *GAxiosResponse, err error) {
 
 // Get issues a GET to the specified URL.
 // Caller should close resp.Data when done reading from it.
-func Get(url string, cfg *GAxiosConfig) (resp *GAxiosResponse, err error) {
+func Get(url string, cfg *GAxiosConfig) (resp *http.Response, err error) {
 	req, err := createRequest(http.MethodGet, url, nil, cfg)
 	if err != nil {
 		return nil, err
@@ -153,7 +139,7 @@ func Get(url string, cfg *GAxiosConfig) (resp *GAxiosResponse, err error) {
 
 // Patch issues a PATCH to the specified URL.
 // Caller should close resp.Data when done reading from it.
-func (h *GAxios) Patch(url string, payload interface{}) (*GAxiosResponse, error) {
+func (h *GAxios) Patch(url string, payload interface{}) (*http.Response, error) {
 	req, err := createRequest(http.MethodPatch, url, payload, h.config)
 	if err != nil {
 		return nil, err
@@ -171,7 +157,7 @@ func Patch(
 	url string,
 	payload interface{},
 	cfg *GAxiosConfig,
-) (*GAxiosResponse, error) {
+) (*http.Response, error) {
 	req, err := createRequest(http.MethodPatch, url, payload, cfg)
 	if err != nil {
 		return nil, err
@@ -186,7 +172,7 @@ func Patch(
 
 // Post issues a POST to the specified URL.
 // Caller should close resp.Data when done reading from it.
-func (h *GAxios) Post(url string, payload interface{}) (*GAxiosResponse, error) {
+func (h *GAxios) Post(url string, payload interface{}) (*http.Response, error) {
 	req, err := createRequest(http.MethodPost, url, payload, h.config)
 	if err != nil {
 		return nil, err
@@ -204,7 +190,7 @@ func Post(
 	url string,
 	payload interface{},
 	cfg *GAxiosConfig,
-) (*GAxiosResponse, error) {
+) (*http.Response, error) {
 	req, err := createRequest(http.MethodPost, url, payload, cfg)
 	if err != nil {
 		return nil, err
@@ -219,7 +205,7 @@ func Post(
 
 // Delete issues a DELETE to the specified URL.
 // Caller should close resp.Data when done reading from it.
-func (h *GAxios) Delete(url string) (*GAxiosResponse, error) {
+func (h *GAxios) Delete(url string) (*http.Response, error) {
 	req, err := createRequest(http.MethodDelete, url, nil, h.config)
 	if err != nil {
 		return nil, err
@@ -234,7 +220,7 @@ func (h *GAxios) Delete(url string) (*GAxiosResponse, error) {
 
 // Delete issues a DELETE to the specified URL.
 // Caller should close resp.Data when done reading from it.
-func Delete(url string, cfg *GAxiosConfig) (*GAxiosResponse, error) {
+func Delete(url string, cfg *GAxiosConfig) (*http.Response, error) {
 	req, err := createRequest(http.MethodDelete, url, nil, cfg)
 	if err != nil {
 		return nil, err
